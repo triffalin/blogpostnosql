@@ -36,7 +36,7 @@ router.post('/posts', async function (req, res) {
 	const newPost = {
 		title: req.body.title,
 		summary: req.body.summary,
-		content: req.body.content,
+		body: req.body.content,
 		date: new Date(),
 		author: {
 			id: authorId,
@@ -46,7 +46,30 @@ router.post('/posts', async function (req, res) {
 	};
 
 	const result = await db.getDb().collection('posts').insertOne(newPost);
+	console.log(result);
 	res.redirect('/posts');
+});
+
+router.get('/posts/:id', async function (req, res) {
+	const postId = req.params.id;
+	const post = await db
+		.getDb()
+		.collection('posts')
+		.findOne({ _id: new ObjectId(postId) }, { summary: 0 });
+
+	if (!post) {
+		return res.status(404).render('404');
+	}
+
+	post.humanReadableDate = post.date.toLocaleDateString('en-US', {
+		weekday: 'long',
+		year: 'numeric',
+		month: 'long',
+		day: 'numeric',
+	});
+	post.date = post.date.toISOString();
+
+	res.render('post-detail', { post: post });
 });
 
 module.exports = router;
